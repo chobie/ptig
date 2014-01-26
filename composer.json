@@ -1,0 +1,34 @@
+{
+    "name": "chobie/ptig",
+    "description": "PHP Twitter IRC gateway",
+    "type": "library",
+    "keywords": [
+        "ptig",
+        "irc"
+    ],
+    "homepage": "https://github.com/chobie/ptig",
+    "license": "BSD-2-Clause",
+    "authors": [
+        {
+            "name": "Shuhei Tanuma",
+            "email": "chobieeee@php.net",
+            "role": "lead"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/chobie/ptig/issues"
+    },
+    "require": {
+        "php": ">=5.3.3",
+        "symfony/yaml": "*",
+        "symfony/event-dispatcher": "2.4",
+        "ext-pcre": "*"
+    },
+    "bin": [
+    ],
+    "autoload": {
+        "psr-4": {
+            "Chobie\\": "src/Chobie"
+        }
+    }
+}
