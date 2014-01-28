@@ -93,6 +93,8 @@ class Message
                 return self::COMMAND_PART;
             case "quit":
                 return self::COMMAND_QUIT;
+            case "ison":
+                return self::COMMAND_ISON;
             default:
                 return self::COMMAND_UNKNOWN;
         }
