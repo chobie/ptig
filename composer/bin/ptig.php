@@ -31,7 +31,7 @@ World::getInstance(function(World $world){
     $world->getEventDispatcher()->addListener("irc.kernel.create_room", function(Server\Event\CreateRoom $event) use ($world, $conf) {
         if ($event->getRoom()->getName() == "#twitter") {
             // #twitter is registered as a special channel for streaming.
-            $timeilne = new \Chobie\Net\Twitter\Timeline\StreamTimeline(
+            $timeilne = new \Chobie\Net\Twitter\Timeline\StreamTimeLine(
                 new \Chobie\Net\Twitter\Stream(CONSUMER_KEY, CONSUMER_SECRET, $conf['oauth_token'], $conf['oauth_token_secret']), "#twitter", array(), 1
             );
 
