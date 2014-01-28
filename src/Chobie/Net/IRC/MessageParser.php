@@ -120,6 +120,9 @@ class MessageParser
                     case Message::COMMAND_QUIT:
                         $parts = $this->subparse(substr($line, $i), 2, $advanced);
                         break;
+                    case Message::COMMAND_ISON:
+                        $parts = $this->subparse(substr($line, $i), 2, $advanced);
+                        break;
                     default:
                         throw new UnsupportedCommandException("Not supported");
                 }

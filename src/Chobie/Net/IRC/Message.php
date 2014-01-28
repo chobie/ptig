@@ -17,6 +17,7 @@ class Message
     const COMMAND_TOPIC = 0x11;
     const COMMAND_PART = 0x12;
     const COMMAND_QUIT = 0x13;
+    const COMMAND_ISON = 0x14;
 
     protected $command = "";
     protected $command_type = 0x00;

@@ -3,6 +3,7 @@ namespace Chobie\Net\IRC\Server;
 
 use Chobie\Net\IRC\Server\Handler\HandlerCap;
 use Chobie\Net\IRC\Server\Handler\HandlerError;
+use Chobie\Net\IRC\Server\Handler\HandlerIson;
 use Chobie\Net\IRC\Server\Handler\HandlerJoin;
 use Chobie\Net\IRC\Server\Handler\HandlerMode;
 use Chobie\Net\IRC\Server\Handler\HandlerNick;
@@ -28,4 +29,5 @@ class Handler
     use HandlerPing;
     use HandlerPong;
     use HandlerCap;
+    use HandlerIson;
 }
