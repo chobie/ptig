@@ -11,6 +11,10 @@ trait HandlerCap
 {
     public function onCap(OutputStream2 $stream, User $user, Message $payload)
     {
-        $stream->writeln(":irc.example.net CAP * LS :multi-prefix");
+        if ($payload->getParameter(0) == "LS") {
+            $stream->writeln(":irc.example.net CAP * LS :multi-prefix");
+        } else if ($payload->getParameter(0) == "REQ") {
+            $stream->writeln(":irc.example.net CAP * ACK :multi-prefix");
+        }
     }
 }
