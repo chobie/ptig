@@ -40,7 +40,7 @@ class Stream
         }
 
         $buffer = substr($this->buffer, $this->offset, $i - $this->offset);
-        $this->offset = $i;
+        $this->offset = $i+1;
         return trim($buffer);
     }
 }

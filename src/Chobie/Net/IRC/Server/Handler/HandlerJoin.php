@@ -13,6 +13,11 @@ trait HandlerJoin
 {
     public function onJoin(OutputStream $stream, User $user, Message $payload)
     {
+        if (!$user->nick) {
+            $stream->writeln(":irc.example.net 451 * :Connection not registered");
+            return;
+        }
+
         @list($rooms, $secrets) = $payload->getParameters();
         $world = World::getInstance();
 

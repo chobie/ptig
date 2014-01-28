@@ -114,13 +114,18 @@ class Server
         $handler = $conn->getHandler();
         $user = $conn->getUser();
         $ostream = new OutputStream2($client);
-        try {
-            $payload = $conn->getParser()->parse($stream);
-            $listener = $this->listener;
+        while (!$stream->isEmpty()) {
+            try {
+                $payload = $conn->getParser()->parse($stream);
+                if (is_null($payload)) {
+                    return;
+                }
 
-            $listener($ostream, $user, $payload, $handler);
-        } catch (UnsupportedCommandException $e) {
-            $handler->onError($ostream, $user, $e);
+                $listener = $this->listener;
+                $listener($ostream, $user, $payload, $handler);
+            } catch (UnsupportedCommandException $e) {
+                $handler->onError($ostream, $user, $e);
+            }
         }
     }
 
