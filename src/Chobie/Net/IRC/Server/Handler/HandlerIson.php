@@ -11,6 +11,10 @@ trait HandlerIson
 {
     public function onIson(OutputStream2 $stream, User $user, Message $payload)
     {
-        $stream->writeln(":irc.example.net 451 * :Connection not registered");
+        if ($user->nick) {
+            $stream->writeln(":irc.example.net 303 `nick` :", "nick", $user->nick);
+        } else {
+            $stream->writeln(":irc.example.net 451 * :Connection not registered");
+        }
     }
 }
