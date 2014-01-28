@@ -4,10 +4,12 @@ namespace Chobie\Net\IRC;
 use Chobie\IO\OutputStream;
 use Chobie\IO\OutputStream2;
 use Chobie\IO\Stream;
+use Chobie\Net\IRC\Entity\Room;
 use Chobie\Net\IRC\Entity\User;
 use Chobie\Net\IRC\Exception\UnsupportedCommandException;
 use Chobie\Net\IRC\Server\Connection;
 use Chobie\Net\IRC\Server\ConnectionPool;
+use Chobie\Net\IRC\Server\Event\JoinRoom;
 use Chobie\Net\IRC\Server\Event\NewMessage;
 use Chobie\Net\IRC\Server\Event\QuitUser;
 use Chobie\Net\IRC\Server\Handler;
@@ -35,9 +37,28 @@ class Server
         $this->world->getEventDispatcher()->addListener("irc.event.quit_user", function(QuitUser $event) {
             echo "QUIT User";
         });
+        $this->world->getEventDispatcher()->addListener("irc.event.join", function(JoinRoom $event) {
+            foreach ($event->getRoom()->getUsers(["dummy" => false]) as $u) {
+                $o = new OutputStream2($u->socket);
+                $o->writeln(":`user` JOIN :`room`",
+                    "user", $event->getUser()->getFQ(),
+                    "room", $event->getRoom()->name
+                );
+            }
+        });
+
         $this->world->getEventDispatcher()->addListener("irc.kernel.new_message", function(NewMessage $event) {
             $room = $this->world->getRoom($event->getRoom());
             $sender = $this->world->getUserByNick($event->getNick(), true);
+
+            /** @var Room $room */
+            if (!$room->isJoined($sender->getNick())) {
+                World::getInstance()->getEventDispatcher()->dispatch("irc.event.join", new JoinRoom(
+                    new OutputStream2(null),
+                    $room,
+                    $sender
+                ));
+            }
 
             foreach ($room->getUsers(["dummy" => false]) as $user) {
                 /** @var User $user */

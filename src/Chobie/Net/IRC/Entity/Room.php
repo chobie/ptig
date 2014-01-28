@@ -1,6 +1,8 @@
 <?php
 namespace Chobie\Net\IRC\Entity;
 
+use Chobie\IO\OutputStream;
+use Chobie\Net\IRC\Server\Event\JoinRoom;
 use Chobie\Net\IRC\Server\World;
 
 class Room
@@ -50,6 +52,14 @@ class Room
     public function addUser(User $user)
     {
         $this->users[$user->nick] = $user;
+
+        // TODO(chobie): 外出しする。直接addUser呼ばないようにしとく
+        $event = new JoinRoom(
+            new OutputStream(null),
+            $this,
+            $user
+        );
+        World::getInstance()->getEventDispatcher()->dispatch("irc.event.join", $event);
     }
 
     public function partUser($nick)
