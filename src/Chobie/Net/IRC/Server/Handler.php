@@ -1,6 +1,7 @@
 <?php
 namespace Chobie\Net\IRC\Server;
 
+use Chobie\Net\IRC\Server\Handler\HandlerCap;
 use Chobie\Net\IRC\Server\Handler\HandlerError;
 use Chobie\Net\IRC\Server\Handler\HandlerJoin;
 use Chobie\Net\IRC\Server\Handler\HandlerMode;
@@ -26,4 +27,5 @@ class Handler
     use HandlerWho;
     use HandlerPing;
     use HandlerPong;
+    use HandlerCap;
 }
