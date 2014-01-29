@@ -28,6 +28,13 @@ class StreamTimeline extends Timeline
                 return;
             }
 
+            $tweet['shorten_id'] = base_convert(++$this->count, 10, 32);
+            $this->histories[(string)$tweet['shorten_id']] = array(
+                "id" => $tweet['id'],
+                "nick" => $tweet['user']['screen_name'],
+                "text" => $tweet['text']
+            );
+
             $tweet = $this->processTweet($tweet);
             $world->getEventDispatcher()->dispatch("irc.kernel.new_message", new NewMessage(
                 $this->room,

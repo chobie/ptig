@@ -53,11 +53,7 @@ class Server
 
             /** @var Room $room */
             if (!$room->isJoined($sender->getNick())) {
-                World::getInstance()->getEventDispatcher()->dispatch("irc.event.join", new JoinRoom(
-                    new OutputStream2(null),
-                    $room,
-                    $sender
-                ));
+                $room->addUser($sender);
             }
 
             foreach ($room->getUsers(["dummy" => false]) as $user) {

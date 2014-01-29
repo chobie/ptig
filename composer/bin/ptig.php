@@ -92,6 +92,8 @@ World::getInstance(function(World $world){
 
     });
 
+
+    // NOTE(chobie): debug callback
     $world->getEventDispatcher()->addListener("debug", function($event) {
         echo "\e[32m# " . $event . "\e[m\n";
     });
@@ -139,14 +141,71 @@ World::getInstance(function(World $world){
                         "user", $event->getUser()->getFQ(),
                         "room", $room->name
                     );
+                } else if ($payload->getParameter(2) == "fav") {
+                    $params = $payload->getParameters();
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    array_shift($params);
+                    array_shift($params);
+                    array_shift($params);
+                    $id = join(" ", $params);
+
+                    if ($__room && $hist = $__room->getPayload()->getHistory($id)) {
+
+                        $t = $world->getExtra();
+                        $status = ltrim($event->getMessage()->getParameter(1), ":");
+                        var_dump($t->post('favorites/create', ['id' => $hist['id']]));
+
+                        $event->getStream()->writeln(":`fq` NOTICE `room` :you've favourited `nick`: `msg`",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName(),
+                            "nick", $hist['nick'],
+                            "msg", $hist['text']
+                        );
+                    } else {
+                        $event->getStream()->writeln(":`fq` NOTICE `room` : specified id does not find.",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName()
+                        );
+                    }
+                } else if ($payload->getParameter(2) == "rt") {
+                    $params = $payload->getParameters();
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    array_shift($params);
+                    array_shift($params);
+                    array_shift($params);
+                    $id = join(" ", $params);
+
+                    if ($__room && $hist = $__room->getPayload()->getHistory($id)) {
+
+                        $t = $world->getExtra();
+                        $status = ltrim($event->getMessage()->getParameter(1), ":");
+                        var_dump($t->post('statuses/retweet/'. $hist['id']));
+
+                        $event->getStream()->writeln(":`fq` NOTICE `room` :you've retweeted `nick`: `msg`",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName(),
+                            "nick", $hist['nick'],
+                            "msg", $hist['text']
+                        );
+                    } else {
+                        $event->getStream()->writeln(":`fq` NOTICE `room` : specified id does not find.",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName()
+                        );
+                    }
                 }
                 return;
             }
 
-            if ($event->getMessage()->getParameter(0) == "#twitter") {
-                $t = $world->getExtra();
-                $t->post('statuses/update', ['status' => ltrim($event->getMessage()->getParameter(1), ":")]);
+            if ($world->roomExists($event->getMessage()->getParameter(0))) {
+                $__room = $world->getRoom($event->getMessage()->getParameter(0));
 
+                $t = $world->getExtra();
+                $status = ltrim($event->getMessage()->getParameter(1), ":");
+
+                $t->post('statuses/update', ['status' => $status]);
                 $event->getStream()->writeln("NOTE :twitter updated");
                 $event->getStream()->writeln(":`host` TOPIC `room` :`msg`",
                     "host", $event->getUser()->getFQ(),

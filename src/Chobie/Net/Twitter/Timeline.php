@@ -17,9 +17,22 @@ class Timeline
 
     protected $params = array();
 
+    protected $histories = array();
+
+    protected $count = 0;
+
     public function getRoom()
     {
         return $this->room;
+    }
+
+    public function getHistory($id)
+    {
+        if (array_key_exists($id, $this->histories)) {
+            return $this->histories[$id];
+        } else {
+            return false;
+        }
     }
 
     public function __construct($t, $room, $params, $interval = 180, $default = null)
@@ -63,7 +76,14 @@ class Timeline
         }
         $a = array_reverse($a);
         foreach ($a as $tweet) {
-            var_dump($tweet);
+            $tweet['shorten_id'] = base_convert(++$this->count, 10, 32);
+            $this->histories[(string)$tweet['shorten_id']] = array(
+                "id" => $tweet['id'],
+                "nick" => $tweet['user']['screen_name'],
+                "text" => $tweet['text']
+            );
+
+
             $tweet = $this->processTweet($tweet);
             $world->getEventDispatcher()->dispatch("irc.kernel.new_message", new NewMessage(
                 $this->room,
@@ -106,6 +126,8 @@ class Timeline
                 $tweet['text'] = str_replace($url['url'], $url['media_url_https'], $tweet['text']);
             }
         }
+
+        $tweet['text'] .= sprintf(" [%s]", $tweet['shorten_id']);
         return $tweet;
     }
 }

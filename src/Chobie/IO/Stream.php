@@ -41,6 +41,7 @@ class Stream
 
         $buffer = substr($this->buffer, $this->offset, $i - $this->offset);
         $this->offset = $i+1;
-        return trim($buffer);
+        // MEMO(chobie): remove non printable codes at this time.
+        return trim(preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x80-\x9F]/u', '', $buffer));
     }
 }
