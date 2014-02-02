@@ -195,6 +195,224 @@ World::getInstance(function(World $world){
                             "room", $__room->getName()
                         );
                     }
+                } else if ($payload->getParameter(2) == "show") {
+                    $params = $payload->getParameters();
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    array_shift($params);
+                    array_shift($params);
+                    array_shift($params);
+                    $id = join(" ", $params);
+
+                    $t = $world->getExtra();
+                    $status = ltrim($event->getMessage()->getParameter(1), ":");
+                    $info = $t->get('users/show', ['screen_name' => $id]);
+                    var_dump($info);//
+                    $event->getStream()->writeln(":`fq` PRIVMSG `room` :`image`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "image", $info['profile_image_url_https']
+                    );
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :user `user`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "user", $info['screen_name']
+                    );
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :location  `location`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "location", $info['location']
+                    );
+
+                    foreach (explode("\n", $info['description']) as $description) {
+                        $event->getStream()->writeln(":`fq` NOTICE `room` :`description`",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName(),
+                            "description", $description
+                        );
+                    }
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :url  `url`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "url", $info['url']
+                    );
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :followers  `count`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "count", $info['followers_count']
+                    );
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :friends  `count`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "count", $info['friends_count']
+                    );
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :favourites  `count`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "count", $info['favourites_count']
+                    );
+                } else if ($payload->getParameter(2) == "follow") {
+                    $params = $payload->getParameters();
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    array_shift($params);
+                    array_shift($params);
+                    array_shift($params);
+                    $id = join(" ", $params);
+
+                    $t = $world->getExtra();
+                    $status = ltrim($event->getMessage()->getParameter(1), ":");
+                    var_dump($t->post('friendsship/create', ['screen_name' => $id]));
+
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :you've followed `nick`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "nick", $id
+                    );
+                } else if ($payload->getParameter(2) == "unfollow") {
+                    $params = $payload->getParameters();
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    array_shift($params);
+                    array_shift($params);
+                    array_shift($params);
+                    $id = join(" ", $params);
+
+                    $t = $world->getExtra();
+                    $status = ltrim($event->getMessage()->getParameter(1), ":");
+                    var_dump($t->post('friendsship/destroy', ['screen_name' => $id]));
+
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :you've unfollowed `nick`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "nick", $id
+                    );
+                } else if ($payload->getParameter(2) == "block") {
+                    $params = $payload->getParameters();
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    array_shift($params);
+                    array_shift($params);
+                    array_shift($params);
+                    $id = join(" ", $params);
+
+                    $t = $world->getExtra();
+                    $status = ltrim($event->getMessage()->getParameter(1), ":");
+                    var_dump($t->post('blocks/create', ['screen_name' => $id]));
+
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :you've blocked `nick`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "nick", $id
+                    );
+                } else if ($payload->getParameter(2) == "unblock") {
+                    $params = $payload->getParameters();
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    array_shift($params);
+                    array_shift($params);
+                    array_shift($params);
+                    $id = join(" ", $params);
+
+                    $t = $world->getExtra();
+                    $status = ltrim($event->getMessage()->getParameter(1), ":");
+                    var_dump($t->post('blocks/destroy', ['screen_name' => $id]));
+
+                    $event->getStream()->writeln(":`fq` NOTICE `room` :you've blocked `nick`",
+                        "fq", "ptig!~ptig@irc.example.net",
+                        "room", $__room->getName(),
+                        "nick", $id
+                    );
+                } else if ($payload->getParameter(2) == "list") {
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    if ($payload->getParameter(3) == "add") {
+                        $params = $payload->getParameters();
+                        $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                        array_shift($params);
+                        array_shift($params);
+                        array_shift($params);
+                        array_shift($params);
+                        $slug = array_shift($params);// slug
+                        $screen_name = array_shift($params);
+
+                        $t = $world->getExtra();
+                        $info = $world->getOwnerInfo();
+                        $status = ltrim($event->getMessage()->getParameter(1), ":");
+                        var_dump($t->post('lists/members/create', [
+                            'screen_name' => $screen_name,
+                            "slug" => $slug,
+                            "owner_screen_name" => $info['screen_name']
+                        ]));
+
+                        $event->getStream()->writeln(":`fq` NOTICE `room` :you've added `nick` to `slug`",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName(),
+                            "nick", $screen_name,
+                            "slug", $slug
+                        );
+                    } else if ($payload->getParameter(3) == "create") {
+                        $params = $payload->getParameters();
+                        $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                        array_shift($params);
+                        array_shift($params);
+                        array_shift($params);
+                        array_shift($params);
+                        $name = array_shift($params);
+                        $private = array_shift($params);
+
+                        $t = $world->getExtra();
+                        $info = $world->getOwnerInfo();
+                        $status = ltrim($event->getMessage()->getParameter(1), ":");
+
+                        $params = [
+                            'name' => $name,
+                        ];
+                        if (!empty($private)) {
+                            $params['mode'] = "private";
+                        }
+
+                        var_dump($t->post('lists/create', $params));
+
+                        $event->getStream()->writeln(":`fq` NOTICE `room` :you've created `list`",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "list", $name
+                        );
+                    } else if ($payload->getParameter(3) == "remove") {
+                        $params = $payload->getParameters();
+                        $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                        array_shift($params);
+                        array_shift($params);
+                        array_shift($params);
+                        array_shift($params);
+                        $name = array_shift($params);
+                        $private = array_shift($params);
+
+                        $t = $world->getExtra();
+                        $info = $world->getOwnerInfo();
+                        $status = ltrim($event->getMessage()->getParameter(1), ":");
+
+                        $params = [
+                            'slug' => $name,
+                            'owner_screen_name' => $info['screen_name'],
+                        ];
+                        var_dump($t->post('lists/destroy', $params));
+
+                        $event->getStream()->writeln(":`fq` NOTICE `room` :you've removed `list`",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "list", $name
+                        );
+                    } else {
+                        $event->getStream()->writeln(":`fq` NOTICE `room` :`act` sub command does not supported yet",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName(),
+                            "act", $payload->getParameter(3)
+                        );
+
+                    }
                 }
                 return;
             }
