@@ -334,9 +334,9 @@ World::getInstance(function(World $world){
                         array_shift($params);
                         array_shift($params);
                         array_shift($params);
-                        $slug = array_shift($params);// slug
                         $screen_name = array_shift($params);
-
+                        $slug = array_shift($params);// slug
+                        
                         $t = $world->getExtra();
                         $info = $world->getOwnerInfo();
                         $status = ltrim($event->getMessage()->getParameter(1), ":");
