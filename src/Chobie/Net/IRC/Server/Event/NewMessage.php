@@ -15,6 +15,11 @@ class NewMessage extends Event
         $this->message = $message;
     }
 
+    public function setMessage($message)
+    {
+        $this->message = $message;
+    }
+
     /**
      * @return mixed
      */

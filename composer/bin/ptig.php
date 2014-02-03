@@ -102,6 +102,7 @@ World::getInstance(function(World $world){
     $world->getEventDispatcher()->addListener("irc.event.private_message",
         function(Server\Event\PrivateMessage $event) use ($world){
             $payload = $event->getMessage();
+
             if ($payload->getParameter(0) == "#eval") {
                 ob_start();
                 eval("?><?php " . ltrim($payload->getParameter(1), ":"));
@@ -413,7 +414,28 @@ World::getInstance(function(World $world){
                         );
 
                     }
+                } else {
+                    $hit = false;
+                    foreach ($world->getInputFilters() as $filter) {
+                        if (method_exists($filter, "matchAction")) {
+                            if ($filter->matchAction($payload->getParameter(2))) {
+                                $__room = $world->getRoom($event->getMessage()->getParameter(0));
+                                $filter->executeAction($__room, $event);
+                                $hit = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!$hit) {
+                        $event->getStream()->writeln(":`fq` NOTICE `room` :`act` command does not supported yet",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName(),
+                            "act", $payload->getParameter(3)
+                        );
+                    }
                 }
+
                 return;
             }
 
@@ -457,6 +479,37 @@ World::getInstance(function(World $world){
         });
         $i += 60;
     }
+
+    $world->getEventDispatcher()->addListener("irc.kernel.new_message", function(Server\Event\NewMessage $event) use($world) {
+        foreach ($world->getInputFilters() as $filter) {
+            if (!$filter->process($event)) {
+                $event->stopPropagation();
+                return;
+            }
+        }
+    }, 100);
+
+    foreach ((array)$world->getConfigByKey("plugins.input_filters") as $filter) {
+        $klass = $filter["class"];
+        $args = array();
+        if (isset($filter['args'])) {
+            $args = $filter['args'];
+        }
+        $f = new $klass($args);
+        $world->addInputFilter($f);
+    }
+
+    foreach ((array)$world->getConfigByKey("plugins.output_filters") as $filter) {
+        $klass = $filter["class"];
+        $args = array();
+        if (isset($filter['args'])) {
+            $args = $filter['args'];
+        }
+        $f = new $klass($args);
+
+        $world->addOutputFilter($f);
+    }
+
 });
 
 Server::createServer(function(

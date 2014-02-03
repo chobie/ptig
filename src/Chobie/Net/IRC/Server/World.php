@@ -28,6 +28,9 @@ class World
 
     protected $timer;
 
+    protected $input_filters = array();
+    protected $output_filters = array();
+
     public function removeUser(User $user)
     {
         foreach ($this->rooms as $room) {
@@ -58,6 +61,25 @@ class World
     public function setConfig($config)
     {
         $this->config = $config;
+    }
+
+    public function getConfigByKey($name)
+    {
+        $hit = false;
+        $p = $this->config;
+        foreach (explode(".", $name) as $key) {
+            if (isset($p[$key])) {
+                $p = $p[$key];
+                $hit = true;
+            } else {
+                $hit = false;
+            }
+        }
+        if (!$hit) {
+            return false;
+        }
+
+        return $p;
     }
 
     public function getConfig()
@@ -159,6 +181,26 @@ class World
         } else {
             return false;
         }
+    }
+
+    public function addInputFilter($filter)
+    {
+        $this->input_filters[$filter->getName()] = $filter;
+    }
+
+    public function getInputFilters()
+    {
+        return $this->input_filters;
+    }
+
+    public function addOutputFilter($filter)
+    {
+        $this->output_filters[$filter->getName()] = $filter;
+    }
+
+    public function getOutputFilters()
+    {
+        return $this->output_filters;
     }
 
     public function appendRoom($callable)
