@@ -416,10 +416,15 @@ World::getInstance(function(World $world){
                     }
                 } else {
                     $hit = false;
-                    foreach ($world->getInputFilters() as $filter) {
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    $a = $world->getInputFilters();
+                    foreach ($world->getCommands() as $command) {
+                        $a[] = $command;
+                    }
+                    foreach ($a as $filter) {
                         if (method_exists($filter, "matchAction")) {
                             if ($filter->matchAction($payload->getParameter(2))) {
-                                $__room = $world->getRoom($event->getMessage()->getParameter(0));
                                 $filter->executeAction($__room, $event);
                                 $hit = true;
                                 break;
@@ -462,23 +467,23 @@ World::getInstance(function(World $world){
 
     // register list channels.
     $i = 0;
-    foreach ($twObj->get("lists/list") as $list) {
-        $world->appendRoom(function(\Chobie\Net\IRC\Entity\Room $room) use ($list, $i) {
-            $room->name = "#" . $list['slug'];
-            $room->params = array(
-                "api" => "lists/statuses",
-                "params" => array(
-                    "slug" => $list['slug'],
-                    "owner_id" => $list['user']['id_str'],
-                ),
-                "options" => array(
-                    "refresh" => 300,
-                    "init" => time() - $i
-                )
-            );
-        });
-        $i += 60;
-    }
+//    foreach ($twObj->get("lists/list") as $list) {
+//        $world->appendRoom(function(\Chobie\Net\IRC\Entity\Room $room) use ($list, $i) {
+//            $room->name = "#" . $list['slug'];
+//            $room->params = array(
+//                "api" => "lists/statuses",
+//                "params" => array(
+//                    "slug" => $list['slug'],
+//                    "owner_id" => $list['user']['id_str'],
+//                ),
+//                "options" => array(
+//                    "refresh" => 300,
+//                    "init" => time() - $i
+//                )
+//            );
+//        });
+//        $i += 60;
+//    }
 
     $world->getEventDispatcher()->addListener("irc.kernel.new_message", function(Server\Event\NewMessage $event) use($world) {
         foreach ($world->getInputFilters() as $filter) {
@@ -510,6 +515,16 @@ World::getInstance(function(World $world){
         $world->addOutputFilter($f);
     }
 
+    foreach ((array)$world->getConfigByKey("plugins.commands") as $filter) {
+        $klass = $filter["class"];
+        $args = array();
+        if (isset($filter['args'])) {
+            $args = $filter['args'];
+        }
+        $f = new $klass($args);
+
+        $world->addCommand($f);
+    }
 });
 
 Server::createServer(function(

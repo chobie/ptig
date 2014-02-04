@@ -22,7 +22,9 @@
         "php": ">=5.3.3",
         "symfony/yaml": "*",
         "symfony/event-dispatcher": "2.4",
-        "ext-pcre": "*"
+        "ext-pcre": "*",
+        "camspiers/statistical-classifier": "dev-master",
+        "maximebf/cachecache": "dev-master"
     },
     "bin": [
     ],

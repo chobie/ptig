@@ -31,6 +31,8 @@ class World
     protected $input_filters = array();
     protected $output_filters = array();
 
+    protected $commands = array();
+
     public function removeUser(User $user)
     {
         foreach ($this->rooms as $room) {
@@ -231,5 +233,15 @@ class World
     public function getRooms()
     {
         return $this->rooms;
+    }
+
+    public function addCommand($command)
+    {
+        $this->commands[] = $command;
+    }
+
+    public function getCommands()
+    {
+        return $this->commands;
     }
 }
