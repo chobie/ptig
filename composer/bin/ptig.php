@@ -467,23 +467,23 @@ World::getInstance(function(World $world){
 
     // register list channels.
     $i = 0;
-//    foreach ($twObj->get("lists/list") as $list) {
-//        $world->appendRoom(function(\Chobie\Net\IRC\Entity\Room $room) use ($list, $i) {
-//            $room->name = "#" . $list['slug'];
-//            $room->params = array(
-//                "api" => "lists/statuses",
-//                "params" => array(
-//                    "slug" => $list['slug'],
-//                    "owner_id" => $list['user']['id_str'],
-//                ),
-//                "options" => array(
-//                    "refresh" => 300,
-//                    "init" => time() - $i
-//                )
-//            );
-//        });
-//        $i += 60;
-//    }
+    foreach ($twObj->get("lists/list") as $list) {
+        $world->appendRoom(function(\Chobie\Net\IRC\Entity\Room $room) use ($list, $i) {
+            $room->name = "#" . $list['slug'];
+            $room->params = array(
+                "api" => "lists/statuses",
+                "params" => array(
+                    "slug" => $list['slug'],
+                    "owner_id" => $list['user']['id_str'],
+                ),
+                "options" => array(
+                    "refresh" => 300,
+                    "init" => time() - $i
+                )
+            );
+        });
+        $i += 60;
+    }
 
     $world->getEventDispatcher()->addListener("irc.kernel.new_message", function(Server\Event\NewMessage $event) use($world) {
         foreach ($world->getInputFilters() as $filter) {
