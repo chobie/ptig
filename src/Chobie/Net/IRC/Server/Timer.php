@@ -11,6 +11,8 @@ class Timer
 
     protected $listeners = array();
 
+    protected $tasks = array();
+
     public function __construct(World $world)
     {
         $this->world = $world;
@@ -20,6 +22,14 @@ class Timer
     public function getWorld()
     {
         return $this->world;
+    }
+
+    public function runOnce($callable, $time)
+    {
+        $this->tasks[] = array(
+            "task" => $callable,
+            "time" => $time,
+        );
     }
 
     public function addListener($name, $callable)
@@ -55,6 +65,13 @@ class Timer
 
             foreach ($this->getListeners() as $listener) {
                 $listener($time, $this->getWorld());
+            }
+
+            foreach ($this->tasks as $offset => $task) {
+                if ($time - $task['time'] < 0) {
+                    $task['task']();
+                    unset($this->tasks[$offset]);
+                }
             }
         });
     }

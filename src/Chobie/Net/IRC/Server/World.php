@@ -103,14 +103,24 @@ class World
         }
     }
 
+    public function setOwner(User $user)
+    {
+        $this->owner = $user;
+    }
+
+    public function getOwner()
+    {
+        return $this->owner;
+    }
+
     public function setOwnerInfo($info)
     {
-        $this->owner = $info;
+        $this->owner_info = $info;
     }
 
     public function getOwnerInfo()
     {
-        return $this->owner;
+        return $this->owner_info;
     }
 
     public function setExtra($extra)

@@ -98,6 +98,38 @@ World::getInstance(function(World $world){
         echo "\e[32m# " . $event . "\e[m\n";
     });
 
+    // NOTE(chobie): auto join
+    $world->getEventDispatcher()->addListener("irc.kernel.append_room", function(Server\Event\AppendRoom $event) {
+        $room = $event->getRoom();
+
+        if (preg_match("/#classified/", $room->getName())) {
+            if (!$room->getPayload()) {
+                // for now
+                $room->setPayload(new \Chobie\Net\Twitter\Timeline\PseudoTimeline(null, $room, []));
+            }
+        }
+
+        $users = array();
+        foreach ($room->getUsers() as $user) {
+            $users[] = $user->getNick();
+        }
+
+        echo "\e[32m# append new room {$room->getName()}\e[m\n";
+        foreach ($room->getUsers(["dummy" => false]) as $user) {
+            $stream = new \Chobie\IO\OutputStream2($user->socket);
+
+            $stream->writeln(":irc.example.net 353 `nick` = `room` :`users`",
+                "nick", $user->getNick(),
+                "room", $event->getRoom()->name,
+                "users", join(",", $users));
+            $stream->writeln(":irc.example.net 366 `nick` `room` :End of NAMES list",
+                "nick", $user->getNick(),
+                "room", $event->getRoom()->name);
+
+        }
+
+    });
+
     // NOTE(chobie): sending tweet
     $world->getEventDispatcher()->addListener("irc.event.private_message",
         function(Server\Event\PrivateMessage $event) use ($world){
@@ -468,21 +500,27 @@ World::getInstance(function(World $world){
     // register list channels.
     $i = 0;
     foreach ($twObj->get("lists/list") as $list) {
-        $world->appendRoom(function(\Chobie\Net\IRC\Entity\Room $room) use ($list, $i) {
-            $room->name = "#" . $list['slug'];
-            $room->params = array(
-                "api" => "lists/statuses",
-                "params" => array(
-                    "slug" => $list['slug'],
-                    "owner_id" => $list['user']['id_str'],
-                ),
-                "options" => array(
-                    "refresh" => 300,
-                    "init" => time() - $i
-                )
-            );
-        });
-        $i += 60;
+        $world->getTimer()->runOnce(function() use ($list, $i, $world) {
+            $world->appendRoom(function(\Chobie\Net\IRC\Entity\Room $room) use ($list, $i) {
+                if (!isset($list['slug'])) {
+                    return;
+                }
+
+                $room->name = "#" . $list['slug'];
+                $room->params = array(
+                    "api" => "lists/statuses",
+                    "params" => array(
+                        "slug" => $list['slug'],
+                        "owner_id" => $list['user']['id_str'],
+                    ),
+                    "options" => array(
+                        "refresh" => 300,
+                        "init" => time() - ($i * 30)
+                    )
+                );
+            });
+        }, time() + 30);
+        $i++;
     }
 
     $world->getEventDispatcher()->addListener("irc.kernel.new_message", function(Server\Event\NewMessage $event) use($world) {
@@ -495,6 +533,9 @@ World::getInstance(function(World $world){
     }, 100);
 
     foreach ((array)$world->getConfigByKey("plugins.input_filters") as $filter) {
+        if (!isset($filter['class'])) {
+            continue;
+        }
         $klass = $filter["class"];
         $args = array();
         if (isset($filter['args'])) {
@@ -505,6 +546,9 @@ World::getInstance(function(World $world){
     }
 
     foreach ((array)$world->getConfigByKey("plugins.output_filters") as $filter) {
+        if (!isset($filter['class'])) {
+            continue;
+        }
         $klass = $filter["class"];
         $args = array();
         if (isset($filter['args'])) {
@@ -516,6 +560,10 @@ World::getInstance(function(World $world){
     }
 
     foreach ((array)$world->getConfigByKey("plugins.commands") as $filter) {
+        if (!isset($filter['class'])) {
+            continue;
+        }
+
         $klass = $filter["class"];
         $args = array();
         if (isset($filter['args'])) {

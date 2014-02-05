@@ -11,6 +11,8 @@ use Camspiers\StatisticalClassifier\DataSource\DataArray;
 use Camspiers\StatisticalClassifier\Tokenizer\TokenizerInterface;
 use Camspiers\StatisticalClassifier\Normalizer\Token\NormalizerInterface;
 use Camspiers\StatisticalClassifier\Model\CachedModel;
+use Chobie\Net\IRC\Server\World;
+use Chobie\Net\Twitter\Timeline\PseudoTimeline;
 
 
 class MecabWord implements TokenizerInterface
@@ -60,6 +62,10 @@ class MecabNoneNormalizer implements NormalizerInterface
                 $result[] = $node->surface;
             }
         }
+        if (empty($result)) {
+            // NOTE(chobie): at least required 1 value.
+            $result[] = ".";
+        }
 
         return $result;
     }
@@ -84,13 +90,64 @@ class NaiveBayes
             $mecab,
             new MecabNoneNormalizer($mecab)
         );
+        $this->file_name = $args['file'];
+
+        $fp = fopen($this->file_name, "r");
+        while (!feof($fp)) {
+            $line = trim(fgets($fp));
+            if (empty($line)) {
+                continue;
+            }
+            list($key, $value) = explode("\t", $line);
+            if (empty($value)) {
+                continue;
+            }
+
+            $value = str_replace("\\n", " ", $value);
+            $this->source->addDocument($key, $value);
+        }
     }
 
     public function process(NewMessage $message)
     {
-        $class = $this->classifier->classify($message->getMessage());
+        if (preg_match("/classified/", $message->getRoom())) {
+            return true;
+        }
 
-        printf("%s: %s\n", $class, $message->getMessage());
+        try {
+            $class = $this->classifier->classify($message->getMessage());
+            $text = sprintf("(%s) %s", $class, $message->getMessage());
+            $message->setMessage($text);
+
+            if ($class) {
+                $world = World::getInstance();
+                $room_name = "#classified@$class";
+
+                $user = $world->getUserByNick($message->getNick(), true);
+                $owner = $world->getOwner();
+
+                if (!$world->roomExists($room_name)) {
+                    $room = $world->appendRoom(function(Room $room) use ($user, $room_name, $owner){
+                        $room->name = $room_name;
+                        $room->setPayload(new PseudoTimeline(null, $room, []));
+                        $room->addUser($user);
+                        if ($owner) {
+                            $room->addUser($owner);
+                        }
+                    });
+                } else {
+                    $room = $world->getRoom($room_name);
+                }
+
+                $world->getEventDispatcher()->dispatch("irc.kernel.new_message", new NewMessage(
+                    $room_name,
+                    $user->getNick(),
+                    $text
+                ));
+            }
+        } catch (\Exception $e) {
+            var_dump($e->getMessage());
+        }
 
         return true;
     }
@@ -119,7 +176,11 @@ class NaiveBayes
         /** @var \Chobie\Net\Twitter\Timeline $timeline */
 
         if ($history = $timeline->getHistory($id)) {
+            var_dump($history);
             $this->source->addDocument($name, $history['text']);
+            file_put_contents($this->file_name,
+                sprintf("%s\t%s\n", $name, str_replace("\n", "\\n", $history['text'])),
+                FILE_APPEND);
 
             $event->getStream()->writeln(":`fq` NOTICE `room` :naive_bayes `msg` added to `category`",
                 "fq", "ptig!~ptig@irc.example.net",

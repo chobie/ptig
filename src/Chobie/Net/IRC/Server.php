@@ -73,7 +73,7 @@ class Server
 
 
             }
-        });
+        }, 100);
     }
 
     public function onShutdown($handle, $status)
@@ -110,6 +110,11 @@ class Server
         $handler = $conn->getHandler();
         $user = $conn->getUser();
         $ostream = new OutputStream2($client);
+
+        if ($user->getNick() && !World::getInstance()->getOwner()) {
+            World::getInstance()->setOwner($user);
+        }
+
         while (!$stream->isEmpty()) {
             try {
                 $payload = $conn->getParser()->parse($stream);
