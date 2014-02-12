@@ -27,7 +27,7 @@ php authenticate.php TOKEN SECRET PIN
 
 cd ..
 # foregroundで動くのでgodとかsupervisor使って
-php composer/bin/ptig.php
+./bin/ptig run --port 6669
 
 # 好きなIRC Clientでlocalhost:6669にアクセスすればOK
 
