@@ -20,9 +20,10 @@
     },
     "require": {
         "php": ">=5.3.3",
-        "symfony/yaml": "*",
-        "symfony/event-dispatcher": "2.4",
         "ext-pcre": "*",
+        "symfony/yaml": "*",
+        "symfony/console": "~2.1",
+        "symfony/event-dispatcher": "2.4",
         "camspiers/statistical-classifier": "dev-master",
         "maximebf/cachecache": "dev-master"
     },
@@ -31,6 +32,10 @@
     "autoload": {
         "psr-4": {
             "Chobie\\": "src/Chobie"
-        }
+        },
+        "files": [
+            "OAuth.php",
+            "twitteroauth.php"
+        ]
     }
 }

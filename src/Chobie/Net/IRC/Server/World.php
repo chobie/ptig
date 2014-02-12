@@ -103,6 +103,13 @@ class World
         }
     }
 
+    public function removeRoom($room)
+    {
+        if (isset($this->rooms[$room])) {
+            unset($this->rooms[$room]);
+        }
+    }
+
     public function setOwner(User $user)
     {
         $this->owner = $user;

@@ -78,13 +78,13 @@ class Server
 
     public function onShutdown($handle, $status)
     {
-        echo "SHUTDOWN";
+        echo "SHUTDOWN\n";
         uv_close($handle, array($this, "onClose"));
     }
 
     public function onClose($handle)
     {
-        echo "CLOSE";
+        echo "CLOSE\n";
     }
 
     public function addListener($listener)
