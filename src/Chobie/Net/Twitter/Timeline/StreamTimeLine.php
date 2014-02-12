@@ -21,8 +21,26 @@ class StreamTimeline extends Timeline
                 return;
             }
             if (isset($tweet['event'])) {
+                if ($tweet['event'] == 'favorite') {
+                    $target = $tweet['target_object'];
+
+                    $target['shorten_id'] = base_convert(++$this->count, 10, 32);
+                    $this->histories[(string)$target['shorten_id']] = array(
+                        "id" => $target['id'],
+                        "nick" => $target['user']['screen_name'],
+                        "text" => $target['text']
+                    );
+                    $target = $this->processTweet($target);
+                    $world->getEventDispatcher()->dispatch("irc.kernel.new_message", new NewMessage(
+                        "#favorites",
+                        $tweet['source']['screen_name'],
+                        "favoried: " . $target['text'],
+                        $target
+                    ));
+                }
                 return;
             }
+
             if (isset($tweet['delete'])) {
                 // IRC doesn't support delete
                 return;
