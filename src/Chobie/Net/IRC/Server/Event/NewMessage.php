@@ -8,11 +8,17 @@ use Symfony\Component\EventDispatcher\Event;
 
 class NewMessage extends Event
 {
-    public function __construct($room, $nick, $message)
+    public function __construct($room, $nick, $message, $payload = array())
     {
         $this->room = $room;
         $this->nick = $nick;
         $this->message = $message;
+        $this->payload = $payload;
+    }
+
+    public function setRoom($room)
+    {
+        $this->room = $room;
     }
 
     public function setMessage($message)
@@ -42,6 +48,16 @@ class NewMessage extends Event
     public function getRoom()
     {
         return $this->room;
+    }
+
+    public function getPayload()
+    {
+        return $this->payload;
+    }
+
+    public function setPayload($payload)
+    {
+        $this->payload = $payload;
     }
 
 }

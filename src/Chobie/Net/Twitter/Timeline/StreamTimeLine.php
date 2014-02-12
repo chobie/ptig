@@ -39,7 +39,8 @@ class StreamTimeline extends Timeline
             $world->getEventDispatcher()->dispatch("irc.kernel.new_message", new NewMessage(
                 $this->room,
                 $tweet['user']['screen_name'],
-                $tweet['text']
+                $tweet['text'],
+                $tweet
             ));
         });
     }

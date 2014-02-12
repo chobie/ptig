@@ -107,28 +107,57 @@ World::getInstance(function(World $world){
                 // for now
                 $room->setPayload(new \Chobie\Net\Twitter\Timeline\PseudoTimeline(null, $room, []));
             }
+            $users = array();
+            foreach ($room->getUsers() as $user) {
+                $users[] = $user->getNick();
+            }
+
+            echo "\e[32m# append new room {$room->getName()}\e[m\n";
+            foreach ($room->getUsers(["dummy" => false]) as $user) {
+                $stream = new \Chobie\IO\OutputStream2($user->socket);
+
+                $stream->writeln(":irc.example.net 353 `nick` = `room` :`users`",
+                    "nick", $user->getNick(),
+                    "room", $event->getRoom()->name,
+                    "users", join(",", $users));
+                $stream->writeln(":irc.example.net 366 `nick` `room` :End of NAMES list",
+                    "nick", $user->getNick(),
+                    "room", $event->getRoom()->name);
+
+            }
         }
-
-        $users = array();
-        foreach ($room->getUsers() as $user) {
-            $users[] = $user->getNick();
-        }
-
-        echo "\e[32m# append new room {$room->getName()}\e[m\n";
-        foreach ($room->getUsers(["dummy" => false]) as $user) {
-            $stream = new \Chobie\IO\OutputStream2($user->socket);
-
-            $stream->writeln(":irc.example.net 353 `nick` = `room` :`users`",
-                "nick", $user->getNick(),
-                "room", $event->getRoom()->name,
-                "users", join(",", $users));
-            $stream->writeln(":irc.example.net 366 `nick` `room` :End of NAMES list",
-                "nick", $user->getNick(),
-                "room", $event->getRoom()->name);
-
-        }
-
     });
+
+
+    $world->getEventDispatcher()->addListener("irc.kernel.append_room", function(Server\Event\AppendRoom $event) {
+        $room = $event->getRoom();
+
+        if (preg_match("/#mention/", $room->getName())) {
+            if (!$room->getPayload()) {
+                // for now
+                $room->setPayload(new \Chobie\Net\Twitter\Timeline\PseudoTimeline(null, $room, []));
+            }
+            $users = array();
+            foreach ($room->getUsers() as $user) {
+                $users[] = $user->getNick();
+            }
+
+            echo "\e[32m# append new room {$room->getName()}\e[m\n";
+            foreach ($room->getUsers(["dummy" => false]) as $user) {
+                $stream = new \Chobie\IO\OutputStream2($user->socket);
+
+                $stream->writeln(":irc.example.net 353 `nick` = `room` :`users`",
+                    "nick", $user->getNick(),
+                    "room", $event->getRoom()->name,
+                    "users", join(",", $users));
+                $stream->writeln(":irc.example.net 366 `nick` `room` :End of NAMES list",
+                    "nick", $user->getNick(),
+                    "room", $event->getRoom()->name);
+
+            }
+        }
+    });
+
 
     // NOTE(chobie): sending tweet
     $world->getEventDispatcher()->addListener("irc.event.private_message",
@@ -222,6 +251,33 @@ World::getInstance(function(World $world){
                             "nick", $hist['nick'],
                             "msg", $hist['text']
                         );
+                    } else {
+                        $event->getStream()->writeln(":`fq` NOTICE `room` : specified id does not find.",
+                            "fq", "ptig!~ptig@irc.example.net",
+                            "room", $__room->getName()
+                        );
+                    }
+                } else if ($payload->getParameter(2) == "re") {
+                    $params = $payload->getParameters();
+                    $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                    array_shift($params);
+                    array_shift($params);
+                    array_shift($params);
+                    $id = array_shift($params);
+                    $msg = join(" ", $params);
+
+                    if ($__room && $hist = $__room->getPayload()->getHistory($id)) {
+
+                        $t = $world->getExtra();
+
+                        if (!preg_match("/@{$hist['nick']}/", $msg)) {
+                            $msg = "@" . $hist['nick'] . " " . $msg;
+                        }
+
+                        $params = ['status' => $msg, "in_reply_to_status_id" => $hist["id"]];
+                        $t->post('statuses/update', $params);
+
                     } else {
                         $event->getStream()->writeln(":`fq` NOTICE `room` : specified id does not find.",
                             "fq", "ptig!~ptig@irc.example.net",
@@ -496,6 +552,11 @@ World::getInstance(function(World $world){
     $world->appendRoom(function(\Chobie\Net\IRC\Entity\Room $room) {
         $room->name = "#twitter";
     });
+    $world->appendRoom(function(\Chobie\Net\IRC\Entity\Room $room) {
+        $room->name = "#mention";
+    });
+
+
 
     // register list channels.
     $i = 0;
@@ -522,6 +583,45 @@ World::getInstance(function(World $world){
         }, time() + 30);
         $i++;
     }
+
+    $world->getEventDispatcher()->addListener("irc.kernel.new_message", function(Server\Event\NewMessage $event) use($world) {
+        $payload = $event->getPayload();
+
+        $world = World::getInstance();
+        $info = $world->getOwnerInfo();
+        if ($payload['in_reply_to_screen_name'] == $info['screen_name'] && $event->getRoom() != "#mention") {
+            $room_name = "#mention";
+
+            $user = $world->getUserByNick($event->getNick(), true);
+            $owner = $world->getOwner();
+
+            if (!$world->roomExists($room_name)) {
+                $room = $world->appendRoom(function(Room $room) use ($user, $room_name, $owner){
+                    $room->name = $room_name;
+                    $room->setPayload(new PseudoTimeline(null, $room, []));
+                    $room->addUser($user);
+                    if ($owner) {
+                        $room->addUser($owner);
+                    }
+                });
+            } else {
+                $room = $world->getRoom($room_name);
+            }
+            $timeline = $room->getPayload();
+            $tweet = $event->getPayload();
+
+            $tweet['shorten_id'] = base_convert($timeline->incrementCount(), 10, 32);
+            $timeline->setHistory((string)$tweet['shorten_id'], $tweet['id'], $tweet['user']['screen_name'], $tweet['text']);
+
+            $tweet = $timeline->processTweet($tweet);
+            $newevent = clone $event;
+            $newevent->setRoom("#mention");
+            $newevent->setMessage($tweet['text']);
+            $newevent->setPayload($tweet);
+
+            $world->getEventDispatcher()->dispatch("irc.kernel.new_message", $newevent);
+        }
+    }, 100);
 
     $world->getEventDispatcher()->addListener("irc.kernel.new_message", function(Server\Event\NewMessage $event) use($world) {
         foreach ($world->getInputFilters() as $filter) {

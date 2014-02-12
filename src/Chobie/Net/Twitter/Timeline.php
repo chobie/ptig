@@ -21,6 +21,11 @@ class Timeline
 
     protected $count = 0;
 
+    public function incrementCount()
+    {
+        return ++$this->count;
+    }
+
     public function getRoom()
     {
         return $this->room;
@@ -88,7 +93,8 @@ class Timeline
             $world->getEventDispatcher()->dispatch("irc.kernel.new_message", new NewMessage(
                 $this->room,
                 $tweet['user']['screen_name'],
-                $tweet['text']
+                $tweet['text'],
+                $tweet
             ));
         }
         if ($tweet) {
