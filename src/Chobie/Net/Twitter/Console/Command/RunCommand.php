@@ -20,7 +20,6 @@ class RunCommand extends Command
         '\Chobie\Net\Twitter\Subscriber\CreateRoomSubscriber',
         '\Chobie\Net\Twitter\Subscriber\DebugSubscriber',
         '\Chobie\Net\Twitter\Subscriber\PrivMsgSubscriber',
-        '\Chobie\Net\Twitter\Subscriber\PrivMsgSubscriber',
         '\Chobie\Net\Twitter\Subscriber\NaiveBayesSubscriber',
         '\Chobie\Net\Twitter\Subscriber\MentionSubscriber',
         '\Chobie\Net\Twitter\Subscriber\NewMessageSubscriber',
