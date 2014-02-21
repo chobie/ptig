@@ -11,11 +11,11 @@ class CreateRoomSubscriber
     {
         return array(
             "irc.kernel.create_room" => array(
-                array('printDebug', 500)
+                array('processCreateRoom', 500)
             ));
     }
 
-    public static function printDebug(\Chobie\Net\IRC\Server\Event\CreateRoom $event)
+    public static function processCreateRoom(\Chobie\Net\IRC\Server\Event\CreateRoom $event)
     {
         $world = World::getInstance();
         $conf = $world->getConfig();

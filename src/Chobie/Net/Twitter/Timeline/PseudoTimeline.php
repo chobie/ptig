@@ -40,15 +40,6 @@ class PseudoTimeline extends Timeline
         return false;
     }
 
-    public function setHistory($shorten_id, $id, $nick, $message)
-    {
-        $this->histories[$shorten_id] = array(
-            "id" => $id,
-            "nick" => $nick,
-            "text" => $message
-        );
-    }
-
     public function update($world)
     {
     }

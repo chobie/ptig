@@ -23,6 +23,7 @@ class NaiveBayesSubscriber
                 // for now
                 $room->setPayload(new \Chobie\Net\Twitter\Timeline\PseudoTimeline(null, $room, []));
             }
+
             $users = array();
             foreach ($room->getUsers() as $user) {
                 $users[] = $user->getNick();

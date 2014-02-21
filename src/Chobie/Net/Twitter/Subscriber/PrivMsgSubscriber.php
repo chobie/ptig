@@ -388,11 +388,39 @@ class PrivMsgSubscriber
             return;
         }
 
-        if ($world->roomExists($event->getMessage()->getParameter(0))) {
-            $__room = $world->getRoom($event->getMessage()->getParameter(0));
+        if (!preg_match("/^#/", $payload->getParameter(0))) {
+            $target = $payload->getParameter(0);
+            $status = ltrim($event->getMessage()->getParameter(1), ":");
 
             $t = $world->getExtra();
+            $res = $t->post('direct_messages/new', [
+                'screen_name' => $target,
+                'text' => $status
+            ]);
+
+            if (isset($res['errors'])) {
+                $event->getStream()->writeln(":`fq` NOTICE `room` : `message`",
+                    "fq", "ptig!~ptig@irc.example.net",
+                    "room", $payload->getParameter(0),
+                    "message", $res['errors']['message']
+                );
+                return;
+            }
+            return;
+        }
+
+        if ($world->roomExists($event->getMessage()->getParameter(0))) {
+            $__room = $world->getRoom($event->getMessage()->getParameter(0));
+            $t = $world->getExtra();
+
             $status = ltrim($event->getMessage()->getParameter(1), ":");
+            if (preg_match("!^/!", trim($status))) {
+                $event->getStream()->writeln(":`fq` NOTICE `room` : heading slash can not accept",
+                    "fq", "ptig!~ptig@irc.example.net",
+                    "room", $__room->getName()
+                );
+                return;
+            }
 
             $t->post('statuses/update', ['status' => $status]);
             $event->getStream()->writeln("NOTE :twitter updated");

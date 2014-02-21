@@ -21,6 +21,8 @@ class Timeline
 
     protected $count = 0;
 
+    protected $max_history = 300;
+
     public function incrementCount()
     {
         return ++$this->count;
@@ -37,6 +39,19 @@ class Timeline
             return $this->histories[$id];
         } else {
             return false;
+        }
+    }
+
+    public function setHistory($shorten_id, $id, $nick, $message)
+    {
+        $this->histories[$shorten_id] = array(
+            "id" => $id,
+            "nick" => $nick,
+            "text" => $message
+        );
+
+        if (count($this->histories) > $this->max_history) {
+            array_splice($this->histories, 0, 100);
         }
     }
 

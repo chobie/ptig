@@ -21,7 +21,10 @@ class NewMessageSubscriber
 
         $world = World::getInstance();
         $info = $world->getOwnerInfo();
-        if ($payload['in_reply_to_screen_name'] == $info['screen_name'] && $event->getRoom() != "#mention") {
+
+        if (isset($payload['in_reply_to_screen_name']) &&
+            $payload['in_reply_to_screen_name'] == $info['screen_name'] &&
+            $event->getRoom() != "#mention") {
             $room_name = "#mention";
 
             $user = $world->getUserByNick($event->getNick(), true);
