@@ -5,6 +5,7 @@ namespace Chobie\Net\Twitter\Plugin\InputFilter;
 use Chobie\Net\IRC\Entity\Room;
 use Chobie\Net\IRC\Server\Event\NewMessage;
 use Chobie\Net\IRC\Server\Event\PrivateMessage;
+use Chobie\Net\IRC\Server\World;
 
 class IgnoreNick
 {
@@ -44,6 +45,14 @@ class IgnoreNick
             "regexp", $name
         );
 
+        $world = World::getInstance();
+        $config = $world->getConfig();
+        foreach ($config['plugins']['input_filters'] as &$filter) {
+            if (isset($filter['class']) && preg_match("/IgnoreNick/", $filter['class'])) {
+                $filter['args'][] = $name;
+            }
+        }
+        $world->setConfig($config);
     }
 
     public function getName()

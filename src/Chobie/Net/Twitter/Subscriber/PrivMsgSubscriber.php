@@ -3,6 +3,7 @@ namespace Chobie\Net\Twitter\Subscriber;
 
 use Chobie\Net\IRC\Server\World;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\Yaml\Yaml;
 
 class PrivMsgSubscriber
     implements EventSubscriberInterface
@@ -357,6 +358,30 @@ class PrivMsgSubscriber
                         "act", $payload->getParameter(3)
                     );
 
+                }
+            } else if ($payload->getParameter(2) == "config") {
+                $__room = $world->getRoom($event->getMessage()->getParameter(0));
+
+                if ($payload->getParameter(3) == "dump") {
+                    $params = $payload->getParameters();
+
+                    $world = World::getInstance();
+                    $yaml = Yaml::dump($world->getConfig(), 10);
+                    if ($yaml) {
+                        foreach (preg_split("/\r?\n/", $yaml) as $line) {
+                            $event->getStream()->writeln(":`fq` NOTICE `room` :`msg`",
+                                "fq", "ptig!~ptig@irc.example.net",
+                                "room", $__room->getName(),
+                                "msg", $line
+                            );
+                        }
+                    }
+                } else if ($payload->getParameter(3) == "save") {
+                    $params = $payload->getParameters();
+
+                    $world = World::getInstance();
+                    $yaml = Yaml::dump($world->getConfig(), 10);
+                    file_put_contents(sprintf("%s/.ptig/config.yml", getenv("HOME")), $yaml);
                 }
             } else {
                 $hit = false;
